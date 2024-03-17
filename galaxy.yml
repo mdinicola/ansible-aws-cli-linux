@@ -1,5 +1,5 @@
 namespace: mdinicola
-name: ansible_aws_tools_linux
+name: aws_tools_linux
 version: 1.0.0
 readme: README.md
 authors:
