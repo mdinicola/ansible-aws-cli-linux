@@ -1,2 +1,5 @@
-# ansible-aws-cli-linux
-Ansible playbook to provision the AWS CLI tool on a Linux server
+# ansible-aws-tools-linux
+Ansible modules for installing, updating, and removing AWS tools on Linux
+
+It provisions the following tools:
+- AWS CLI
