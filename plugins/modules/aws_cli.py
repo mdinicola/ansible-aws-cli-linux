@@ -85,6 +85,7 @@ message:
 from ansible.module_utils.basic import AnsibleModule
 import os
 import tempfile
+import urllib.request
 
 def run_module():
     # define available arguments/parameters a user can pass to the module
@@ -115,15 +116,6 @@ def run_module():
         supports_check_mode=True
     )
 
-    # if the user is working with this module in only check mode we do not
-    # want to make any changes to the environment, just return the current
-    # state with no modifications
-    if module.check_mode:
-        module.exit_json(**result)
-
-    # manipulate or modify the state as needed (this is going to be the
-    # part where your module will do what it needs to do)
-    
     if module.params['state'] == 'present':
         # Exit if aws cli is already installed
         if os.path.exists(os.path.join(module.params['bin_dir'], 'aws')):
@@ -142,12 +134,23 @@ def run_module():
         if download_dir is None:
             temp_dir = tempfile.TemporaryDirectory()
             download_dir = temp_dir.name
+
+        try:
+            # Download installer zip file
+            download_path = os.path.join(download_dir, module.params['download_file_name'])
+            urllib.request.urlretrieve(module.params['download_url'], download_path)
+            result['download_path'] = download_path
+
+        except Exception as e:
+            module.fail_json(msg='An error occurred: ' + str(e), **result)
+        finally:
+            if temp_dir is not None:
+                temp_dir.cleanup()
+
     elif module.params['state'] == 'absent':
         if not os.path.exists(os.path.join(module.params['bin_dir'], 'aws')):
             result['message'] = 'aws cli is not installed'
             module.exit_json(**result)
-
-        
 
     elif module.params['state'] == 'update':
             pass
@@ -167,10 +170,8 @@ def run_module():
     # simple AnsibleModule.exit_json(), passing the key/value results
     module.exit_json(**result)
 
-
 def main():
     run_module()
-
 
 if __name__ == '__main__':
     main()
