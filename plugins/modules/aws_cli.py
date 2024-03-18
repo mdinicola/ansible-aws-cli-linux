@@ -83,6 +83,8 @@ message:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from zipfile import ZipFile
+from pathlib import Path
 import os
 import tempfile
 import urllib.request
@@ -140,6 +142,12 @@ def run_module():
             download_path = os.path.join(download_dir, module.params['download_file_name'])
             urllib.request.urlretrieve(module.params['download_url'], download_path)
             result['download_path'] = download_path
+
+            # Extract zip file
+            extracted_path = os.path.join(download_dir, Path(download_path).stem)
+            with ZipFile(download_path) as zipFile:
+                zipFile.extractall(extracted_path)
+            result['extracted_path'] = extracted_path
 
         except Exception as e:
             module.fail_json(msg='An error occurred: ' + str(e), **result)
