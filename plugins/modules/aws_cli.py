@@ -24,10 +24,20 @@ options:
         default: 'present'
         required: no
         type: str
+    download_url:
+        description:
+            - Specify the url to download the AWS CLI installer package from.
+        default: 'https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip'
+        type: str
     download_dir:
         description:
-            - Specify where to download the AWS CLI install script.
+            - Specify where to download the AWS CLI installer package.
             - Defaults to a temporary directory.
+        type: str
+    download_file_name:
+        description:
+            - Specify the the name of the AWS CLI installer package when downloaded
+        default: 'awscli-exe-linux-x86_64.zip'
         type: str
     bin_dir: 
         description: 
@@ -74,12 +84,15 @@ message:
 
 from ansible.module_utils.basic import AnsibleModule
 import os
+import tempfile
 
 def run_module():
     # define available arguments/parameters a user can pass to the module
     module_args = dict(
         state=dict(type='str', required=False, default = 'present'),
+        download_url=dict(type='str', required=False, default='https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip'),
         download_dir=dict(type='str', required=False, default=None),
+        download_file_name=dict(type='str', required=False, default='awscli-exe-linux-x86_64.zip'),
         bin_dir=dict(type='str', required=False, default='/usr/local/bin'),
         install_dir=dict(type='str', required=False, default='/usr/local/aws-cli')
     )
@@ -112,10 +125,23 @@ def run_module():
     # part where your module will do what it needs to do)
     
     if module.params['state'] == 'present':
+        # Exit if aws cli is already installed
         if os.path.exists(os.path.join(module.params['bin_dir'], 'aws')):
             result['message'] = 'aws cli already exists'
             module.exit_json(**result)
 
+        result['changed'] = True
+
+        # If running in check mode, exit before making any changes
+        if module.check_mode:
+            module.exit_json(**result)
+
+        # Use download_dir variable if set, otherwise use temporary directory
+        download_dir = module.params['download_dir']
+        temp_dir = None
+        if download_dir is None:
+            temp_dir = tempfile.TemporaryDirectory()
+            download_dir = temp_dir.name
     elif module.params['state'] == 'absent':
         if not os.path.exists(os.path.join(module.params['bin_dir'], 'aws')):
             result['message'] = 'aws cli is not installed'
