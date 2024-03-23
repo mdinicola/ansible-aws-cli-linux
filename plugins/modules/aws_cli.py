@@ -88,6 +88,7 @@ from pathlib import Path
 import os
 import tempfile
 import urllib.request
+import subprocess
 
 def run_module():
     # define available arguments/parameters a user can pass to the module
@@ -148,6 +149,14 @@ def run_module():
             with ZipFile(download_path) as zipFile:
                 zipFile.extractall(extracted_path)
             result['extracted_path'] = extracted_path
+
+            # Install AWS CLI
+            installer_path = os.path.join(extracted_path, 'aws/install')
+            subprocess.run(['chmod', '+x', installer_path])
+            subprocess.run([installer_path, '--bin-dir', module.params['bin_dir'], '--install-dir', module.params['install_dir']])
+            subprocess.run(['chmod', '-R', '755', module.params['install_dir']])
+
+            result['message'] = 'AWS CLI installed successfully'
 
         except Exception as e:
             module.fail_json(msg='An error occurred: ' + str(e), **result)
