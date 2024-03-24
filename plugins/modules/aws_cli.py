@@ -111,17 +111,17 @@ def run_module():
     )
 
     if module.params['state'] == 'present':
-        perform_install(module, result)
+        perform_install_or_update(module, result, False)
 
     elif module.params['state'] == 'absent':
         perform_uninstall(module, result)
 
     elif module.params['state'] == 'update':
-        perform_update(module, result)
+        perform_install_or_update(module, result, True)
 
     module.exit_json(**result)
 
-def perform_install(module: AnsibleModule, result: dict):
+def perform_install_or_update(module: AnsibleModule, result: dict, perform_update: bool = False):
     # Exit if aws cli is already installed
     if os.path.exists(os.path.join(module.params['bin_dir'], 'aws')):
         result['message'] = 'aws cli already exists'
@@ -139,12 +139,17 @@ def perform_install(module: AnsibleModule, result: dict):
         # Download and extract installer zip
         extracted_path = download_and_extract(module.params['download_url'], download_dir, module.params['download_file_name'])
 
+        update_param = ''
+        if perform_update:
+            update_param = '-- update'
+
         # Install AWS CLI
         installer_path = os.path.join(extracted_path, 'aws/install')
         subprocess.run(['chmod', '+x', installer_path])
-        subprocess.run([installer_path, '--bin-dir', module.params['bin_dir'], '--install-dir', module.params['install_dir']])
+        subprocess.run([installer_path, '--bin-dir', module.params['bin_dir'], '--install-dir', module.params['install_dir'], update_param])
         subprocess.run(['chmod', '-R', '755', module.params['install_dir']])
 
+        result['update_param'] = update_param
         result['message'] = 'AWS CLI installed successfully'
 
     except Exception as e:
@@ -170,9 +175,6 @@ def perform_uninstall(module: AnsibleModule, result: dict):
         safe_remove_directory(module.params['install_dir'])
     except Exception as e:
         module.fail_json(msg='An error occurred: ' + str(e), **result)
-
-def perform_update(module: AnsibleModule, result: dict):
-    pass
 
 def get_download_directory(download_dir: str = None):
     # Use download_dir variable if set, otherwise use temporary directory
