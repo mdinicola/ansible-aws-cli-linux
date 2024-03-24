@@ -75,9 +75,8 @@ EXAMPLES = r'''
 '''
 
 RETURN = r'''
-## These are examples of possible return values, and in general should use other names for return values.
 message:
-    description: The output message that the test module generates.
+    description: The output message from the module
     type: str
     returned: always
     sample: 'aws cli installed successfully'
@@ -93,7 +92,6 @@ import urllib.request
 import subprocess
 
 def run_module():
-    # define available arguments/parameters a user can pass to the module
     module_args = dict(
         state=dict(type='str', required=False, default = 'present'),
         download_url=dict(type='str', required=False, default='https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip'),
@@ -103,109 +101,106 @@ def run_module():
         install_dir=dict(type='str', required=False, default='/usr/local/aws-cli')
     )
 
-    # seed the result dict in the object
-    # we primarily care about changed and state
-    # changed is if this module effectively modified the target
-    # state will include any data that you want your module to pass back
-    # for consumption, for example, in a subsequent task
     result = dict(
         changed=False
     )
 
-    # the AnsibleModule object will be our abstraction working with Ansible
-    # this includes instantiation, a couple of common attr would be the
-    # args/params passed to the execution, as well as if the module
-    # supports check mode
     module = AnsibleModule(
         argument_spec=module_args,
         supports_check_mode=True
     )
 
     if module.params['state'] == 'present':
-        # Exit if aws cli is already installed
-        if os.path.exists(os.path.join(module.params['bin_dir'], 'aws')):
-            result['message'] = 'aws cli already exists'
-            module.exit_json(**result)
-
-        result['changed'] = True
-
-        # If running in check mode, exit before making any changes
-        if module.check_mode:
-            module.exit_json(**result)
-
-        # Use download_dir variable if set, otherwise use temporary directory
-        download_dir = module.params['download_dir']
-        temp_dir = None
-        if download_dir is None:
-            temp_dir = tempfile.TemporaryDirectory()
-            download_dir = temp_dir.name
-
-        try:
-            # Download installer zip file
-            download_path = os.path.join(download_dir, module.params['download_file_name'])
-            urllib.request.urlretrieve(module.params['download_url'], download_path)
-            result['download_path'] = download_path
-
-            # Extract zip file
-            extracted_path = os.path.join(download_dir, Path(download_path).stem)
-            with ZipFile(download_path) as zipFile:
-                zipFile.extractall(extracted_path)
-            result['extracted_path'] = extracted_path
-
-            # Install AWS CLI
-            installer_path = os.path.join(extracted_path, 'aws/install')
-            subprocess.run(['chmod', '+x', installer_path])
-            subprocess.run([installer_path, '--bin-dir', module.params['bin_dir'], '--install-dir', module.params['install_dir']])
-            subprocess.run(['chmod', '-R', '755', module.params['install_dir']])
-
-            result['message'] = 'AWS CLI installed successfully'
-
-        except Exception as e:
-            module.fail_json(msg='An error occurred: ' + str(e), **result)
-        finally:
-            if temp_dir is not None:
-                temp_dir.cleanup()
+        perform_install(module, result)
 
     elif module.params['state'] == 'absent':
-        if not os.path.exists(os.path.join(module.params['bin_dir'], 'aws')):
-            result['message'] = 'aws cli is not installed'
-            module.exit_json(**result)
-
-        result['changed'] = True
-
-        # If running in check mode, exit before making any changes
-        if module.check_mode:
-            module.exit_json(**result)
-
-        try:
-            if os.path.exists(os.path.join(module.params['bin_dir'], 'aws')):
-                os.remove(os.path.join(module.params['bin_dir'], 'aws'))
-            
-            if os.path.exists(os.path.join(module.params['bin_dir'], 'aws_completer')):
-                os.remove(os.path.join(module.params['bin_dir'], 'aws_completer'))
-            
-            if os.path.exists(module.params['install_dir']):
-                shutil.rmtree(module.params['install_dir'])
-        except Exception as e:
-            module.fail_json(msg='An error occurred: ' + str(e), **result)
+        perform_uninstall(module, result)
 
     elif module.params['state'] == 'update':
-            pass
-    
-    # use whatever logic you need to determine whether or not this module
-    # made any modifications to your target
-    #if module.params['new']:
-    #    result['changed'] = True
+        perform_update(module, result)
 
-    # during the execution of the module, if there is an exception or a
-    # conditional state that effectively causes a failure, run
-    # AnsibleModule.fail_json() to pass in the message and the result
-    #if module.params['name'] == 'fail me':
-    #    module.fail_json(msg='You requested this to fail', **result)
-
-    # in the event of a successful module execution, you will want to
-    # simple AnsibleModule.exit_json(), passing the key/value results
     module.exit_json(**result)
+
+def perform_install(module: AnsibleModule, result: dict):
+    # Exit if aws cli is already installed
+    if os.path.exists(os.path.join(module.params['bin_dir'], 'aws')):
+        result['message'] = 'aws cli already exists'
+        module.exit_json(**result)
+
+    result['changed'] = True
+
+    # If running in check mode, exit before making any changes
+    if module.check_mode:
+        module.exit_json(**result)
+
+    download_dir, temp_dir = get_download_directory(module.params['download_dir'])
+
+    try:
+        # Download and extract installer zip
+        extracted_path = download_and_extract(module.params['download_url'], download_dir, module.params['download_file_name'])
+
+        # Install AWS CLI
+        installer_path = os.path.join(extracted_path, 'aws/install')
+        subprocess.run(['chmod', '+x', installer_path])
+        subprocess.run([installer_path, '--bin-dir', module.params['bin_dir'], '--install-dir', module.params['install_dir']])
+        subprocess.run(['chmod', '-R', '755', module.params['install_dir']])
+
+        result['message'] = 'AWS CLI installed successfully'
+
+    except Exception as e:
+        module.fail_json(msg='An error occurred: ' + str(e), **result)
+    finally:
+        if temp_dir is not None:
+            temp_dir.cleanup()
+
+def perform_uninstall(module: AnsibleModule, result: dict):
+    if not os.path.exists(os.path.join(module.params['bin_dir'], 'aws')):
+        result['message'] = 'aws cli is not installed'
+        module.exit_json(**result)
+
+    result['changed'] = True
+
+    # If running in check mode, exit before making any changes
+    if module.check_mode:
+        module.exit_json(**result)
+
+    try:
+        safe_remove_file(os.path.join(module.params['bin_dir'], 'aws'))
+        safe_remove_file(os.path.join(module.params['bin_dir'], 'aws_completer'))
+        safe_remove_directory(module.params['install_dir'])
+    except Exception as e:
+        module.fail_json(msg='An error occurred: ' + str(e), **result)
+
+def perform_update(module: AnsibleModule, result: dict):
+    pass
+
+def get_download_directory(download_dir: str = None):
+    # Use download_dir variable if set, otherwise use temporary directory
+    if download_dir is not None:
+        return download_dir, None
+
+    temp_dir = tempfile.TemporaryDirectory()
+    return temp_dir.name, temp_dir
+
+def download_and_extract(download_url: str, download_dir: str, file_name: str):
+    # Download file
+    download_path = os.path.join(download_dir, file_name)
+    urllib.request.urlretrieve(download_url, download_path)
+
+    # Extract zip file
+    extracted_path = os.path.join(download_dir, Path(download_path).stem)
+    with ZipFile(download_path) as zipFile:
+        zipFile.extractall(extracted_path)
+    
+    return extracted_path
+
+def safe_remove_file(file_path: str):
+    if os.path.exists(file_path):
+        os.remove(file_path)
+
+def safe_remove_directory(dir_path: str):
+    if os.path.exists(dir_path):
+        shutil.rmtree(dir_path)
 
 def main():
     run_module()
