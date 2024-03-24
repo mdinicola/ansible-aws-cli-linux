@@ -1,20 +1,14 @@
 namespace: mdinicola
-name: ansible_aws_tools_linux
+name: aws_tools_linux
 version: 1.0.0
 readme: README.md
 authors:
 - Mike Di Nicola <mike@mdinicola.com> (mdinicola.com)
 description: Modules for installing AWS tools on Linux, such as the AWS CLI
-license_file: 'LICENSE'
+license_file: 'COPYING'
 
-# A list of tags you want to associate with the collection for indexing/searching. A tag name has the same character
-# requirements as 'namespace' and 'name'
-tags: []
+tags: ['aws','aws_cli']
 
-# Collections that this collection requires to be installed for it to be usable. The key of the dict is the
-# collection label 'namespace.name'. The value is a version range
-# L(specifiers,https://python-semanticversion.readthedocs.io/en/latest/#requirement-specification). Multiple version
-# range specifiers can be set and are separated by ','
 # dependencies: {}
 
 repository: https://github.com/mdinicola/ansible-aws-tools-linux
@@ -22,16 +16,7 @@ documentation: https://github.com/mdinicola/ansible-aws-tools-linux
 homepage: https://github.com/mdinicola/ansible-aws-tools-linux
 issues: https://github.com/mdinicola/ansible-aws-tools-linux
 
-# A list of file glob-like patterns used to filter any files or directories that should not be included in the build
-# artifact. A pattern is matched from the relative path of the file or directory of the collection directory. This
-# uses 'fnmatch' to match the files or directories. Some directories and files like 'galaxy.yml', '*.pyc', '*.retry',
-# and '.git' are always filtered. Mutually exclusive with 'manifest'
 build_ignore: []
 
-# A dict controlling use of manifest directives used in building the collection artifact. The key 'directives' is a
-# list of MANIFEST.in style
-# L(directives,https://packaging.python.org/en/latest/guides/using-manifest-in/#manifest-in-commands). The key
-# 'omit_default_directives' is a boolean that controls whether the default directives are used. Mutually exclusive
-# with 'build_ignore'
 # manifest: null
 
