@@ -20,6 +20,7 @@ options:
         description: 
             - Indicates the desired tool state.
             - Use O(update) to update to a new version if one is available
+            - The O(absent) option does not remove config files when uninstalling.  They must be manually removed
         choices: ['present','absent','update']
         default: 'present'
         required: no
@@ -67,8 +68,8 @@ EXAMPLES = r'''
   mdinicola.aws_tools_linux.aws_cli:
     state: update
 
-# fail the module
-- name: Update AWS CLI
+# Uninstall the AWS CLI
+- name: Uninstall AWS CLI
   mdinicola.aws_tools_linux.aws_cli:
     state: absent
 '''
@@ -86,6 +87,7 @@ from ansible.module_utils.basic import AnsibleModule
 from zipfile import ZipFile
 from pathlib import Path
 import os
+import shutil
 import tempfile
 import urllib.request
 import subprocess
@@ -168,6 +170,24 @@ def run_module():
         if not os.path.exists(os.path.join(module.params['bin_dir'], 'aws')):
             result['message'] = 'aws cli is not installed'
             module.exit_json(**result)
+
+        result['changed'] = True
+
+        # If running in check mode, exit before making any changes
+        if module.check_mode:
+            module.exit_json(**result)
+
+        try:
+            if os.path.exists(os.path.join(module.params['bin_dir'], 'aws')):
+                os.remove(os.path.join(module.params['bin_dir'], 'aws'))
+            
+            if os.path.exists(os.path.join(module.params['bin_dir'], 'aws_completer')):
+                os.remove(os.path.join(module.params['bin_dir'], 'aws_completer'))
+            
+            if os.path.exists(module.params['install_dir']):
+                shutil.rmtree(module.params['install_dir'])
+        except Exception as e:
+            module.fail_json(msg='An error occurred: ' + str(e), **result)
 
     elif module.params['state'] == 'update':
             pass
