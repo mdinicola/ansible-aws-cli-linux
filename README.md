@@ -1,6 +1,8 @@
 # ansible-aws-tools-linux
 Ansible modules for installing, updating, and removing AWS tools on Linux
 
+https://galaxy.ansible.com/ui/repo/published/mdinicola/aws_tools_linux/docs/
+
 It provisions the following tools:
 - AWS CLI
 
