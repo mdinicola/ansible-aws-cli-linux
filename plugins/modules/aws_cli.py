@@ -123,7 +123,7 @@ def run_module():
 
 def perform_install_or_update(module: AnsibleModule, result: dict, perform_update: bool = False):
     # Exit if aws cli is already installed
-    if os.path.exists(os.path.join(module.params['bin_dir'], 'aws')):
+    if os.path.exists(os.path.join(module.params['bin_dir'], 'aws')) and perform_update == False:
         result['message'] = 'aws cli already exists'
         module.exit_json(**result)
 
@@ -141,7 +141,7 @@ def perform_install_or_update(module: AnsibleModule, result: dict, perform_updat
 
         update_param = ''
         if perform_update:
-            update_param = '-- update'
+            update_param = '--update'
 
         # Install AWS CLI
         installer_path = os.path.join(extracted_path, 'aws/install')
@@ -149,7 +149,6 @@ def perform_install_or_update(module: AnsibleModule, result: dict, perform_updat
         subprocess.run([installer_path, '--bin-dir', module.params['bin_dir'], '--install-dir', module.params['install_dir'], update_param])
         subprocess.run(['chmod', '-R', '755', module.params['install_dir']])
 
-        result['update_param'] = update_param
         result['message'] = 'AWS CLI installed successfully'
 
     except Exception as e:
