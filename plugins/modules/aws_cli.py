@@ -19,9 +19,9 @@ options:
     state:
         description: 
             - Indicates the desired tool state.
-            - Use O(update) to update to a new version if one is available
+            - Use O(updated) to update to a new version if one is available
             - The O(absent) option does not remove config files when uninstalling.  They must be manually removed
-        choices: ['present','absent','update']
+        choices: ['present','absent','updated']
         default: 'present'
         required: no
         type: str
@@ -66,7 +66,7 @@ EXAMPLES = r'''
 # Update the AWS CLI to a newer version
 - name: Update AWS CLI
   mdinicola.aws_tools_linux.aws_cli:
-    state: update
+    state: updated
 
 # Uninstall the AWS CLI
 - name: Uninstall AWS CLI
@@ -116,7 +116,7 @@ def run_module():
     elif module.params['state'] == 'absent':
         perform_uninstall(module, result)
 
-    elif module.params['state'] == 'update':
+    elif module.params['state'] == 'updated':
         perform_install_or_update(module, result, True)
 
     module.exit_json(**result)

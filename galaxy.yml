@@ -1,6 +1,6 @@
 namespace: mdinicola
 name: aws_tools_linux
-version: 1.0.0
+version: 1.0.1
 readme: README.md
 authors:
 - Mike Di Nicola <mike@mdinicola.com> (mdinicola.com)
