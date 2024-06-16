@@ -1,0 +1,21 @@
+- name: Verify uninstalling AWS SAM CLI has no effect
+  mdinicola.aws_tools_linux.aws_sam_cli:
+    state: absent
+  become: yes
+  register: already_uninstalled_result
+
+- name: Verify the message confirms AWS SAM CLI is already uninstalled
+  assert:
+    that: already_uninstalled_result.message == "aws sam cli is not installed"
+
+- name: Run install tests
+  ansible.builtin.include_tasks: 
+    file: install.yml
+
+- name: Run update tests
+  ansible.builtin.include_tasks: 
+    file: update.yml
+
+- name: Run uninstall tests
+  ansible.builtin.include_tasks: 
+    file: uninstall.yml
