@@ -1,13 +1,13 @@
 namespace: mdinicola
 name: aws_tools_linux
-version: 1.0.1
+version: 1.1.0
 readme: README.md
 authors:
 - Mike Di Nicola <mike@mdinicola.com> (mdinicola.com)
-description: Modules for installing AWS tools on Linux, such as the AWS CLI
+description: Modules for installing AWS CLI tools on Linux
 license_file: 'COPYING'
 
-tags: ['aws','aws_cli']
+tags: ['aws','aws_cli','aws_sam_cli']
 
 # dependencies: {}
 
