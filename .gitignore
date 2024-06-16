@@ -164,5 +164,4 @@ cython_debug/
 
 # Ansible
 
-tests/integration/inventory
 tests/output/
