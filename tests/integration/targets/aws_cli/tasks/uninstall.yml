@@ -1,0 +1,27 @@
+- name: Uninstall AWS CLI
+  mdinicola.aws_tools_linux.aws_cli:
+    state: absent
+  become: yes
+  register: uninstall_result
+
+- name: Verify the message confirms AWS CLI is uninstalled
+  assert:
+    that: uninstall_result.message == "aws cli uninstalled successfully"
+
+- name: Get the AWS CLI bin path
+  stat:
+    path: /usr/local/bin/aws
+  register: bin_path_result
+
+- name: Verify the bin path does not exist
+  assert:
+    that: bin_path_result.stat.exists == false
+
+- name: Get the AWS CLI install path
+  stat:
+    path: /usr/local/aws-cli
+  register: install_path_result
+
+- name: Verify the install path does not exist
+  assert:
+    that: install_path_result.stat.exists == false

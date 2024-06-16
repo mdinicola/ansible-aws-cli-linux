@@ -1,0 +1,27 @@
+- name: Install AWS SAM CLI
+  mdinicola.aws_tools_linux.aws_sam_cli:
+    state: present
+  become: yes
+  register: install_result
+
+- name: Verify the message confirms AWS SAM CLI is installed
+  assert:
+    that: install_result.message == "aws sam cli installed successfully"
+
+- name: Get the AWS SAM CLI bin path
+  stat:
+    path: /usr/local/bin/sam
+  register: bin_path_result
+
+- name: Verify the bin path exists
+  assert:
+    that: bin_path_result.stat.exists == true
+
+- name: Get the AWS SAM CLI install path
+  stat:
+    path: /usr/local/aws-sam-cli
+  register: install_path_result
+
+- name: Verify the install path exists
+  assert:
+    that: install_path_result.stat.exists == true

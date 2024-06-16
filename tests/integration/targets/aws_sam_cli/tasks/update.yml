@@ -1,0 +1,9 @@
+- name: Update AWS SAM CLI
+  mdinicola.aws_tools_linux.aws_sam_cli:
+    state: updated
+  become: yes
+  register: install_result
+
+- name: Verify the message confirms AWS SAM CLI is updated
+  assert:
+    that: install_result.message == "aws sam cli updated successfully"
