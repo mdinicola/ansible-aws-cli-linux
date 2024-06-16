@@ -139,17 +139,21 @@ def perform_install_or_update(module: AnsibleModule, result: dict, perform_updat
         # Download and extract installer zip
         extracted_path = download_and_extract(module.params['download_url'], download_dir, module.params['download_file_name'])
 
-        update_param = ''
-        if perform_update:
-            update_param = '--update'
-
         # Install AWS CLI
         installer_path = os.path.join(extracted_path, 'aws/install')
         subprocess.run(['chmod', '+x', installer_path])
-        subprocess.run([installer_path, '--bin-dir', module.params['bin_dir'], '--install-dir', module.params['install_dir'], update_param])
+
+        if perform_update:
+            subprocess.run([installer_path, '--bin-dir', module.params['bin_dir'], '--install-dir', module.params['install_dir'], '--update'])
+        else:
+            subprocess.run([installer_path, '--bin-dir', module.params['bin_dir'], '--install-dir', module.params['install_dir']])
+
         subprocess.run(['chmod', '-R', '755', module.params['install_dir']])
 
-        result['message'] = 'AWS CLI installed successfully'
+        if perform_update:
+            result['message'] = 'aws cli updated successfully'    
+        else:
+            result['message'] = 'aws cli installed successfully'
 
     except Exception as e:
         module.fail_json(msg='An error occurred: ' + str(e), **result)
@@ -172,6 +176,8 @@ def perform_uninstall(module: AnsibleModule, result: dict):
         safe_remove_file(os.path.join(module.params['bin_dir'], 'aws'))
         safe_remove_file(os.path.join(module.params['bin_dir'], 'aws_completer'))
         safe_remove_directory(module.params['install_dir'])
+
+        result['message'] = 'aws cli uninstalled successfully'
     except Exception as e:
         module.fail_json(msg='An error occurred: ' + str(e), **result)
 
