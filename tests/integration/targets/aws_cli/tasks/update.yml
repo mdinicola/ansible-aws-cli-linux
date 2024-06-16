@@ -1,0 +1,9 @@
+- name: Update AWS CLI
+  mdinicola.aws_tools_linux.aws_cli:
+    state: updated
+  become: yes
+  register: install_result
+
+- name: Verify the message confirms AWS CLI is updated
+  assert:
+    that: install_result.message == "aws cli updated successfully"

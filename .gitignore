@@ -161,3 +161,8 @@ cython_debug/
 
 *.tar
 *.gz
+
+# Ansible
+
+tests/integration/inventory
+tests/output/
